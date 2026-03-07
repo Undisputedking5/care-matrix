@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from datetime import date
-from patients.models import Patient, VitalSign, LabResult, MedicalRecord
+from patients.models import Patient, VitalSign, LabResult, MedicalRecord, Ward, Bed
 
 import io
 import base64
@@ -183,3 +183,63 @@ def patient_delete(request, pk):
         return redirect('patients:patient_list')
 
     return render(request, 'patients/delete.html', {'patient': patient})
+
+
+# =====================================================
+# WARD MANAGEMENT
+# =====================================================
+
+@login_required
+def ward_list(request):
+    wards = Ward.objects.all()
+    # Add occupancy stats to wards
+    for ward in wards:
+        ward.occupied_count = ward.beds.filter(is_occupied=True).count()
+        ward.total_beds = ward.beds.count()
+    return render(request, 'patients/ward_list.html', {'wards': wards})
+
+@login_required
+def ward_detail(request, pk):
+    ward = get_object_or_404(Ward, pk=pk)
+    beds = ward.beds.all().select_related('occupant')
+    return render(request, 'patients/ward_detail.html', {'ward': ward, 'beds': beds})
+
+@login_required
+def admit_patient(request, pk):
+    patient = get_object_or_404(Patient, pk=pk)
+    
+    # If explicitly discharging and trying to re-admit without bed check
+    if patient.current_bed:
+        # Already admitted
+        return redirect('patients:patient_detail', pk=patient.pk)
+        
+    available_beds = Bed.objects.filter(is_occupied=False)
+    
+    if request.method == 'POST':
+        bed_id = request.POST.get('bed_id')
+        if bed_id:
+            bed = get_object_or_404(Bed, id=bed_id)
+            patient.current_bed = bed
+            patient.save()
+            bed.is_occupied = True
+            bed.save()
+            return redirect('patients:patient_detail', pk=patient.pk)
+
+    return render(request, 'patients/admit_patient.html', {
+        'patient': patient, 
+        'available_beds': available_beds
+    })
+
+@login_required
+def discharge_patient(request, pk):
+    patient = get_object_or_404(Patient, pk=pk)
+    if request.method == 'POST' and patient.current_bed:
+        bed = patient.current_bed
+        bed.is_occupied = False
+        bed.save()
+        
+        patient.current_bed = None
+        patient.save()
+        return redirect('patients:patient_detail', pk=patient.pk)
+        
+    return redirect('patients:patient_detail', pk=patient.pk)

@@ -13,4 +13,10 @@ urlpatterns = [
     path('<int:pk>/delete/', views.patient_delete, name='patient_delete'),
     path('<int:pk>/add_vitals/', views.add_vitals, name='add_vitals'),
     path('<int:pk>/add_lab/', views.add_lab_result, name='add_lab'),
+    
+    # Ward & Bed Management
+    path('wards/', views.ward_list, name='ward_list'),
+    path('wards/<int:pk>/', views.ward_detail, name='ward_detail'),
+    path('<int:pk>/admit/', views.admit_patient, name='admit_patient'),
+    path('<int:pk>/discharge/', views.discharge_patient, name='discharge_patient'),
 ]

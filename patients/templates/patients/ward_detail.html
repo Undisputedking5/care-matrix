@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="mt-4 pb-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="text-light m-0">{{ ward.name }} <span class="badge bg-secondary fs-6">{{ ward.ward_type }}</span></h2>
+            <a href="{% url 'patients:ward_list' %}" class="btn btn-outline-light btn-sm">Back to Wards</a>
+        </div>
+        
+        <div class="row">
+        {% for bed in beds %}
+            <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
+                {% if bed.is_occupied %}
+                    <div class="card shadow-sm border-danger h-100">
+                        <div class="card-body text-center">
+                            <h5 class="card-title fw-bold text-danger mb-3">Bed {{ bed.bed_number }}</h5>
+                            <span class="badge bg-danger mb-2">Occupied</span>
+                            {% if bed.occupant %}
+                                <p class="text-dark small mb-1 fw-bold">{{ bed.occupant.first_name }} {{ bed.occupant.last_name }}</p>
+                                <a href="{% url 'patients:patient_detail' bed.occupant.id %}" class="btn btn-sm btn-outline-danger mt-2">View Patient</a>
+                            {% else %}
+                                <p class="text-muted small mb-0">Occupant details missing</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="card shadow-sm border-success h-100">
+                        <div class="card-body text-center">
+                            <h5 class="card-title fw-bold text-success mb-3">Bed {{ bed.bed_number }}</h5>
+                            <span class="badge bg-success mb-2">Available</span>
+                            <p class="text-muted small mb-0 mt-3">Ready for admission</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="alert alert-warning">No beds have been added to this ward yet.</div>
+            </div>
+        {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

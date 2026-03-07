@@ -1,7 +1,35 @@
 from django.db import models
 from datetime import date
 
+# -----------------------------
+# Ward & Bed Models
+# -----------------------------
+class Ward(models.Model):
+    WARD_TYPES = (
+        ('General', 'General'),
+        ('ICU', 'ICU'),
+        ('Maternity', 'Maternity'),
+        ('Pediatric', 'Pediatric'),
+    )
+    name = models.CharField(max_length=100)
+    ward_type = models.CharField(max_length=20, choices=WARD_TYPES, default='General')
+    capacity = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.name} ({self.ward_type})"
+
+class Bed(models.Model):
+    ward = models.ForeignKey(Ward, related_name='beds', on_delete=models.CASCADE)
+    bed_number = models.CharField(max_length=20)
+    is_occupied = models.BooleanField(default=False)
+
+    def __str__(self):
+        status = "Occupied" if self.is_occupied else "Available"
+        return f"{self.ward.name} - Bed {self.bed_number} ({status})"
+
+# -----------------------------
 # Existing Patient model
+# -----------------------------
 class Patient(models.Model):
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
@@ -10,6 +38,9 @@ class Patient(models.Model):
     phone = models.CharField(max_length=15)
     address = models.TextField(blank=True)
     is_high_risk = models.BooleanField(default=False)
+
+    # Optional assignment to a bed
+    current_bed = models.OneToOneField(Bed, null=True, blank=True, on_delete=models.SET_NULL, related_name='occupant')
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"

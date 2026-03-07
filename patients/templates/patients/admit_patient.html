@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="card shadow-sm text-dark">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Admit Patient</h4>
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">{{ patient.first_name }} {{ patient.last_name }}</h5>
+                <p class="card-text text-muted mb-4">Patient ID: {{ patient.id }}</p>
+                
+                {% if patient.current_bed %}
+                    <div class="alert alert-warning">
+                        <strong>Already Admitted!</strong> This patient is currently admitted to Bed {{ patient.current_bed.bed_number }} in {{ patient.current_bed.ward.name }}.
+                        Please discharge them before re-admitting to a different bed.
+                    </div>
+                    <a href="{% url 'patients:patient_detail' patient.pk %}" class="btn btn-secondary">Back to Patient Profile</a>
+                {% elif available_beds %}
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="mb-4">
+                            <label for="bed_id" class="form-label fw-bold">Select Available Bed:</label>
+                            <select name="bed_id" id="bed_id" class="form-select" required>
+                                <option value="" disabled selected>-- Select a bed --</option>
+                                {% for bed in available_beds %}
+                                    <option value="{{ bed.id }}">{{ bed.ward.name }} - Bed {{ bed.bed_number }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text mt-2 text-muted">Only available (unoccupied) beds are shown here.</div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'patients:patient_detail' patient.pk %}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-success">Admit Patient</button>
+                        </div>
+                    </form>
+                {% else %}
+                    <div class="alert alert-danger">
+                        <strong>No Beds Available!</strong> There are currently no available beds across any ward. You must add more beds or discharge a patient before admitting someone.
+                    </div>
+                    <a href="{% url 'patients:patient_detail' patient.pk %}" class="btn btn-secondary">Back to Patient Profile</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

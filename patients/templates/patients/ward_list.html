@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="mt-4 pb-4">
+        <h2 class="text-light mb-4">Ward Management</h2>
+        
+        <div class="row">
+        {% for ward in wards %}
+            <div class="col-md-4 mb-3">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h5 class="card-title fw-bold text-dark">{{ ward.name }}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">{{ ward.ward_type }}</h6>
+                        
+                        <div class="my-3">
+                            <h2 class="display-4 text-primary">{{ ward.occupied_count }}<small class="text-muted fs-6">/{{ ward.total_beds }}</small></h2>
+                            <p class="text-muted mb-0">Beds Occupied</p>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white border-top-0 pb-3 text-center">
+                        <a href="{% url 'patients:ward_detail' ward.pk %}" class="btn btn-primary btn-sm">View Beds</a>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="alert alert-warning">No wards have been added yet! You can add them from the Admin portal.</div>
+            </div>
+        {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

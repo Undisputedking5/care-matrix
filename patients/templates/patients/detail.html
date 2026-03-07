@@ -9,7 +9,24 @@
         <p><strong>Phone:</strong> {{ patient.phone }}</p>
         <p><strong>Address:</strong> {{ patient.address }}</p>
 
+        <p>
+            <strong>Status:</strong>
+            {% if patient.current_bed %}
+              <span class="badge bg-primary">Admitted: {{ patient.current_bed.ward.name }} (Bed {{ patient.current_bed.bed_number }})</span>
+            {% else %}
+              <span class="badge bg-secondary">Outpatient</span>
+            {% endif %}
+        </p>
+
         <div class="mt-3">
+            {% if not patient.current_bed %}
+              <a href="{% url 'patients:admit_patient' patient.pk %}" class="btn btn-primary">Admit to Ward</a>
+            {% else %}
+              <form action="{% url 'patients:discharge_patient' patient.pk %}" method="POST" class="d-inline">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-warning" onclick="return confirm('Discharge {{ patient.first_name }}?');">Discharge</button>
+              </form>
+            {% endif %}
             <a href="{% url 'patients:patient_update' patient.id %}" class="btn btn-warning">Edit</a>
             <a href="{% url 'patients:patient_delete' patient.id %}" class="btn btn-danger">Delete</a>
             <a href="{% url 'patients:patient_list' %}" class="btn btn-secondary">Back to List</a>

@@ -6,24 +6,32 @@
   <h2 class="mb-4 text-light">CareMatrix Patients Summary</h2>
   <div class="row mb-4">
 
-    <div class="col-md-4 mb-3">
-      <div class="card shadow-sm text-white bg-primary p-4 text-center">
+    <div class="col-md-3 mb-3">
+      <div class="card shadow-sm text-white bg-primary p-4 text-center h-100">
         <h6 class="text-uppercase">Total Patients</h6>
         <h2 class="fw-bold">{{ patients_count }}</h2>
       </div>
     </div>
 
-    <div class="col-md-4 mb-3">
-      <div class="card shadow-sm text-white bg-success p-4 text-center">
+    <div class="col-md-3 mb-3">
+      <div class="card shadow-sm text-white bg-success p-4 text-center h-100">
         <h6 class="text-uppercase">Average BMI</h6>
         <h2 class="fw-bold">{{ avg_bmi }}</h2>
       </div>
     </div>
 
-    <div class="col-md-4 mb-3">
-      <div class="card shadow-sm text-white bg-danger p-4 text-center">
+    <div class="col-md-3 mb-3">
+      <div class="card shadow-sm text-white bg-danger p-4 text-center h-100">
         <h6 class="text-uppercase">High-Risk Patients</h6>
         <h2 class="fw-bold">{{ high_risk_patients|length }}</h2>
+      </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+      <div class="card shadow-sm text-white bg-info p-4 text-center h-100">
+        <h6 class="text-uppercase">Bed Occupancy</h6>
+        <h2 class="fw-bold">{{ occupancy_rate }}<small class="fs-4">%</small></h2>
+        <small class="text-white-50">{{ available_beds }} of {{ total_beds }} available</small>
       </div>
     </div>
 
