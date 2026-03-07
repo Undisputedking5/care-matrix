@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+
+  <h2 class="mb-4 text-light">CareMatrix Patients Summary</h2>
+  <div class="row mb-4">
+
+    <div class="col-md-4 mb-3">
+      <div class="card shadow-sm text-white bg-primary p-4 text-center">
+        <h6 class="text-uppercase">Total Patients</h6>
+        <h2 class="fw-bold">{{ patients_count }}</h2>
+      </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+      <div class="card shadow-sm text-white bg-success p-4 text-center">
+        <h6 class="text-uppercase">Average BMI</h6>
+        <h2 class="fw-bold">{{ avg_bmi }}</h2>
+      </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+      <div class="card shadow-sm text-white bg-danger p-4 text-center">
+        <h6 class="text-uppercase">High-Risk Patients</h6>
+        <h2 class="fw-bold">{{ high_risk_patients|length }}</h2>
+      </div>
+    </div>
+
+  </div>
+  <div class="mb-4">
+    <h4>High-Risk Patients</h4>
+    <div class="row">
+      {% for patient in high_risk_patients %}
+        <div class="col-md-3 mb-3">
+          <div class="card shadow-sm border-danger text-center p-3">
+            <h6 class="fw-bold">{{ patient.first_name }} {{ patient.last_name }}</h6>
+            <small class="text-muted">Patient ID: {{ patient.id }}</small>
+          </div>
+        </div>
+      {% empty %}
+        <div class="col-12">
+          <p class="text-muted">No high-risk patients currently.</p>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="mb-4">
+    <h4>Recent Vital Signs</h4>
+    {% if recent_vitals %}
+      <ul class="list-group">
+        {% for vital in recent_vitals %}
+          <li class="list-group-item">
+            <strong>{{ vital.patient.first_name }} {{ vital.patient.last_name }}</strong> —
+            {{ vital.visit_date }} | BP: {{ vital.blood_pressure_systolic }}/{{ vital.blood_pressure_diastolic }},
+            Pulse: {{ vital.pulse }}, Temp: {{ vital.temperature }}°C
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-muted">No vital signs recorded yet.</p>
+    {% endif %}
+  </div>
+  <div class="mb-4">
+    <h4>Recent Lab Results</h4>
+    {% if recent_labs %}
+      <ul class="list-group">
+        {% for lab in recent_labs %}
+          <li class="list-group-item">
+            <strong>{{ lab.patient.first_name }} {{ lab.patient.last_name }}</strong> —
+            {{ lab.test_date }} | {{ lab.test_name }}: {{ lab.result_value }} ({{ lab.status }})
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-muted">No lab results recorded yet.</p>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

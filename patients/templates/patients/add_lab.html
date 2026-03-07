@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h3>Add Lab Result for {{ patient.first_name }} {{ patient.last_name }}</h3>
+  <form method="POST" class="card p-4 shadow-sm">{% csrf_token %}
+    <div class="mb-3"><label>Test Name</label><input name="test_name" class="form-control" required></div>
+    <div class="mb-3"><label>Result Value</label><input name="result_value" class="form-control" required></div>
+    <div class="mb-3"><label>Status</label>
+      <select name="status" class="form-control">
+        <option value="Normal">Normal</option>
+        <option value="Abnormal">Abnormal</option>
+      </select>
+    </div>
+    <div class="mb-3"><label>Notes</label><textarea name="notes" class="form-control"></textarea></div>
+    <div class="mb-3"><label>Test Date</label><input type="date" name="test_date" class="form-control"></div>
+    <button type="submit" class="btn btn-success">Add Lab</button>
+    <a href="{% url 'patients:patient_detail' patient.id %}" class="btn btn-secondary">Cancel</a>
+  </form>
+</div>
+{% endblock %}

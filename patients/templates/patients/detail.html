@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm p-4">
+        <h3 class="mb-3">{{ patient.first_name }} {{ patient.last_name }}</h3>
+
+        <p><strong>DOB:</strong> {{ patient.date_of_birth }}</p>
+        <p><strong>Gender:</strong> {{ patient.gender }}</p>
+        <p><strong>Phone:</strong> {{ patient.phone }}</p>
+        <p><strong>Address:</strong> {{ patient.address }}</p>
+
+        <div class="mt-3">
+            <a href="{% url 'patients:patient_update' patient.id %}" class="btn btn-warning">Edit</a>
+            <a href="{% url 'patients:patient_delete' patient.id %}" class="btn btn-danger">Delete</a>
+            <a href="{% url 'patients:patient_list' %}" class="btn btn-secondary">Back to List</a>
+        </div>
+    </div>
+    <div class="card shadow-sm p-4 mt-4">
+        <h4 class="mb-3">Blood Pressure Trend</h4>
+
+        {% if graph %}
+            <img src="data:image/png;base64,{{ graph }}" class="img-fluid rounded">
+        {% else %}
+            <p class="text-muted">No vital signs recorded for this patient.</p>
+        {% endif %}
+    </div>
+
+    <div class="mt-4">
+        <h4>Vital Signs</h4>
+        <a href="{% url 'patients:add_vitals' patient.id %}" class="btn btn-success btn-sm mb-2">
+            Add Vitals
+        </a>
+
+        <ul class="list-group">
+            {% for vital in patient.vitals.all %}
+                <li class="list-group-item">
+                    {{ vital.visit_date }} |
+                    BP: {{ vital.blood_pressure_systolic }}/{{ vital.blood_pressure_diastolic }} |
+                    Pulse: {{ vital.pulse }} |
+                    Temp: {{ vital.temperature }}°C
+                </li>
+            {% empty %}
+                <li class="list-group-item">No vitals recorded.</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="mt-4">
+        <h4>Lab Results</h4>
+        <a href="{% url 'patients:add_lab' patient.id %}" class="btn btn-success btn-sm mb-2">
+            Add Lab Result
+        </a>
+
+        <ul class="list-group">
+            {% for lab in patient.labs.all %}
+                <li class="list-group-item">
+                    {{ lab.test_date }} |
+                    {{ lab.test_name }}: {{ lab.result_value }}
+                    <strong>({{ lab.status }})</strong>
+                </li>
+            {% empty %}
+                <li class="list-group-item">No lab results recorded.</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="mt-4">
+        <h4>Medical Records</h4>
+        <a href="{% url 'patients:add_record' patient.id %}" class="btn btn-primary btn-sm mb-2">
+            Add Record
+        </a>
+
+        <ul class="list-group">
+            {% for record in patient.medicalrecord_set.all %}
+                <li class="list-group-item">
+                    {{ record.created_at }} | {{ record.description }}
+                </li>
+            {% empty %}
+                <li class="list-group-item">No medical records added.</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %}

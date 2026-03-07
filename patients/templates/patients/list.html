@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Patients List</h2>
+        <a href="{% url 'patients:patient_create' %}" class="btn btn-success">Add Patient</a>
+    </div>
+
+    {% if patients %}
+    <div class="row">
+        {% for patient in patients %}
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm p-3">
+                <h5>{{ patient.first_name }} {{ patient.last_name }}</h5>
+                <p>ID: {{ patient.id }}</p>
+                <p>DOB: {{ patient.date_of_birth }}</p>
+                <p>Phone: {{ patient.phone }}</p>
+                <div class="d-flex justify-content-between mt-2">
+                    <a href="{% url 'patients:patient_detail' patient.id %}" class="btn btn-primary btn-sm">View</a>
+                    <a href="{% url 'patients:patient_update' patient.id %}" class="btn btn-warning btn-sm">Edit</a>
+                    <a href="{% url 'patients:patient_delete' patient.id %}" class="btn btn-danger btn-sm">Delete</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+        <p>No patients found. <a href="{% url 'patients:patient_create' %}">Add a patient</a>.</p>
+    {% endif %}
+</div>
+{% endblock %}
