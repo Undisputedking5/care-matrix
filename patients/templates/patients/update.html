@@ -32,6 +32,10 @@
                 <label>Address</label>
                 <input type="text" name="address" value="{{ patient.address }}" class="form-control">
             </div>
+            <div>
+                <label>Doctor</label>
+                <input type="text" name="doctor" value="{{ patient.doctor }}" class="form-control">
+            </div>
             <button type="submit" class="btn btn-warning">Update Patient</button>
             <a href="{% url 'patients:patient_detail' patient.id %}" class="btn btn-secondary">Cancel</a>
         </form>

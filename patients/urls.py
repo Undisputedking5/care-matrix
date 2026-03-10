@@ -16,7 +16,18 @@ urlpatterns = [
     
     # Ward & Bed Management
     path('wards/', views.ward_list, name='ward_list'),
+    path('wards/create/', views.ward_create, name='ward_create'),
     path('wards/<int:pk>/', views.ward_detail, name='ward_detail'),
     path('<int:pk>/admit/', views.admit_patient, name='admit_patient'),
     path('<int:pk>/discharge/', views.discharge_patient, name='discharge_patient'),
+    path('wards/<int:pk>/update/', views.ward_update, name='ward_update'),
+    path('wards/<int:pk>/delete/', views.ward_delete, name='ward_delete'),
+    path('beds/create/<int:ward_id>/', views.bed_create, name='bed_create'),
+    path('beds/update/<int:ward_id>/', views.bed_update, name='bed_update'),
+    path('beds/delete/<int:ward_id>/', views.bed_delete, name='bed_delete'),
+
+    path('<int:pk>/admit/', views.admit_patient, name='admit_patient'),
+    path('<int:pk>/discharge/', views.discharge_patient, name='discharge_patient'),
+
 ]
+

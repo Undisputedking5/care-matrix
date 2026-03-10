@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Update Ward</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Ward Name *</label>
+                            <input type="text" class="form-control" id="name" name="name" required value="{{ ward.name }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="ward_type" class="form-label">Ward Type *</label>
+                            <select class="form-select" id="ward_type" name="ward_type" required>
+                                {% for value, label in ward_types %}
+                                    <option value="{{ value }}" {% if ward.ward_type == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="capacity" class="form-label">Capacity (Number of Beds) *</label>
+                            <input type="number" class="form-control" id="capacity" name="capacity" min="1" required value="{{ ward.capacity }}">
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">Update Ward</button>
+                            <a href="{% url 'patients:ward_detail' ward.pk %}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

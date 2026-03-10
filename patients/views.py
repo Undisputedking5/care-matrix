@@ -11,19 +11,12 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 
-# =====================================================
-# PATIENT LIST
-# =====================================================
-
 @login_required
 def patient_list(request):
     patients = Patient.objects.all()
     return render(request, 'patients/list.html', {'patients': patients})
 
 
-# =====================================================
-# CREATE PATIENT
-# =====================================================
 
 @login_required
 def patient_create(request):
@@ -34,16 +27,13 @@ def patient_create(request):
             date_of_birth=request.POST.get('date_of_birth'),
             gender=request.POST.get('gender'),
             phone=request.POST.get('phone'),
-            address=request.POST.get('address')
+            address=request.POST.get('address'),
+            doctor=request.POST.get('doctor')
         )
         return redirect('patients:patient_detail', pk=patient.id)
 
     return render(request, 'patients/create.html')
 
-
-# =====================================================
-# UPDATE PATIENT
-# =====================================================
 
 @login_required
 def patient_update(request, pk):
@@ -56,15 +46,12 @@ def patient_update(request, pk):
         patient.gender = request.POST.get('gender')
         patient.phone = request.POST.get('phone')
         patient.address = request.POST.get('address')
+        patient.doctor = request.POST.get('doctor')
         patient.save()
         return redirect('patients:patient_detail', pk=patient.id)
 
     return render(request, 'patients/update.html', {'patient': patient})
 
-
-# =====================================================
-# PATIENT DETAIL + GRAPH
-# =====================================================
 
 @login_required
 def patient_detail(request, pk):
@@ -107,9 +94,6 @@ def patient_detail(request, pk):
     return render(request, 'patients/detail.html', context)
 
 
-# =====================================================
-# ADD VITALS
-# =====================================================
 
 @login_required
 def add_vitals(request, pk):
@@ -131,10 +115,6 @@ def add_vitals(request, pk):
     return render(request, 'patients/add_vitals.html', {'patient': patient})
 
 
-# =====================================================
-# ADD LAB RESULT
-# =====================================================
-
 @login_required
 def add_lab_result(request, pk):
     patient = get_object_or_404(Patient, pk=pk)
@@ -153,10 +133,6 @@ def add_lab_result(request, pk):
     return render(request, 'patients/add_lab.html', {'patient': patient})
 
 
-# =====================================================
-# ADD MEDICAL RECORD
-# =====================================================
-
 @login_required
 def add_record(request, pk):
     patient = get_object_or_404(Patient, pk=pk)
@@ -170,9 +146,9 @@ def add_record(request, pk):
     return render(request, 'patients/add_record.html', {'patient': patient})
 
 
-# =====================================================
-# DELETE PATIENT
-# =====================================================
+
+
+
 
 @login_required
 def patient_delete(request, pk):
@@ -185,9 +161,6 @@ def patient_delete(request, pk):
     return render(request, 'patients/delete.html', {'patient': patient})
 
 
-# =====================================================
-# WARD MANAGEMENT
-# =====================================================
 
 @login_required
 def ward_list(request):
@@ -243,3 +216,88 @@ def discharge_patient(request, pk):
         return redirect('patients:patient_detail', pk=patient.pk)
         
     return redirect('patients:patient_detail', pk=patient.pk)
+
+
+@login_required
+def ward_create(request):
+    if request.method == 'POST':
+        ward = Ward.objects.create(
+            name=request.POST.get('name'),
+            ward_type=request.POST.get('ward_type'),
+            capacity=int(request.POST.get('capacity') or 0)
+        )
+        return redirect('patients:ward_detail', pk=ward.id)
+
+    return render(request, 'patients/ward_create.html', {
+        'ward_types': Ward.WARD_TYPES
+    })
+
+
+@login_required
+def ward_update(request, pk):
+    ward = get_object_or_404(Ward, pk=pk)
+
+    if request.method == 'POST':
+        ward.name = request.POST.get('name')
+        ward.ward_type = request.POST.get('ward_type')
+        ward.capacity = int(request.POST.get('capacity') or 0)
+        ward.save()
+        return redirect('patients:ward_detail', pk=ward.id)
+
+    return render(request, 'patients/ward_update.html', {
+        'ward': ward,
+        'ward_types': Ward.WARD_TYPES
+    })
+
+
+
+@login_required
+def ward_delete(request, pk):
+    ward = get_object_or_404(Ward, pk=pk)
+
+    if request.method == 'POST':
+        ward.delete()
+        return redirect('patients:ward_list')
+
+    return render(request, 'patients/ward_delete.html', {'ward': ward})
+
+
+
+@login_required
+def bed_create(request, ward_id):
+    ward = get_object_or_404(Ward, id=ward_id)
+
+    if request.method == 'POST':
+        Bed.objects.create(
+            ward=ward,
+            bed_number=request.POST.get('bed_number')
+        )
+        return redirect('patients:ward_detail', id=ward.id)
+
+    return render(request, 'patients/bed_create.html', {'ward': ward})
+
+
+
+@login_required
+def bed_update(request, pk):
+    bed = get_object_or_404(Bed, pk=pk)
+
+    if request.method == 'POST':
+        bed.bed_number = request.POST.get('bed_number')
+        bed.save()
+        return redirect('patients:ward_detail', pk=bed.ward.id)
+
+    return render(request, 'patients/bed_update.html', {'bed': bed})
+
+
+
+@login_required
+def bed_delete(request, pk):
+    bed = get_object_or_404(Bed, pk=pk)
+    ward_id = bed.ward.id
+
+    if request.method == 'POST':
+        bed.delete()
+        return redirect('patients:ward_detail', pk=ward_id)
+
+    return render(request, 'patients/bed_delete.html', {'bed': bed})

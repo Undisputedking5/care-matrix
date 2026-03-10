@@ -37,6 +37,7 @@ class Patient(models.Model):
     gender = models.CharField(max_length=10)
     phone = models.CharField(max_length=15)
     address = models.TextField(blank=True)
+    doctor = models.CharField(blank=True, null=True, max_length=100)
     is_high_risk = models.BooleanField(default=False)
 
     # Optional assignment to a bed
