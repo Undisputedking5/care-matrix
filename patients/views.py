@@ -272,7 +272,7 @@ def bed_create(request, ward_id):
             ward=ward,
             bed_number=request.POST.get('bed_number')
         )
-        return redirect('patients:ward_detail', id=ward.id)
+        return redirect('patients:ward_detail', pk=ward.id)
 
     return render(request, 'patients/bed_create.html', {'ward': ward})
 
