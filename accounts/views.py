@@ -2,39 +2,101 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required, user_passes_test
+from .models import DoctorProfile
+
+
+def admin_check(user):
+    return user.is_superuser
 
 
 def login_view(request):
-    """Handle login page"""
+    """Handle login page with dual mode (Admin/Doctor)"""
     if request.method == 'POST':
+        login_type = request.POST.get('login_type')  # 'admin' or 'doctor'
         username = request.POST.get('username')
         password = request.POST.get('password')
-        user = authenticate(request, username=username, password=password)
-        if user:
-            login(request, user)
-            return redirect('dashboard:dashboard_home')
+
+        if login_type == 'doctor':
+            # For doctor, password field contains the doctor_id
+            try:
+                doctor_profile = DoctorProfile.objects.get(doctor_id=password)
+                # Authenticate matching user with that same doctor_id
+                user = authenticate(request, username=doctor_profile.user.username, password=password)
+            except DoctorProfile.DoesNotExist:
+                user = None
         else:
-            messages.error(request, "Invalid username or password.")
+            # Traditional admin login
+            user = authenticate(request, username=username, password=password)
+
+        if user:
+            if login_type == 'admin' and not user.is_superuser:
+                messages.error(request, "Access denied. Only superusers can log in via Admin mode.")
+            else:
+                login(request, user)
+                if user.is_superuser:
+                    return redirect('accounts:admin_dashboard')
+                return redirect('dashboard:dashboard_home')
+        else:
+            if login_type == 'doctor':
+                messages.error(request, "Invalid Doctor ID.")
+            else:
+                messages.error(request, "Invalid username or password.")
+                
     return render(request, 'accounts/login.html')
 
 
-def signup_view(request):
-    """Handle signup page"""
+@login_required
+@user_passes_test(admin_check)
+def admin_dashboard(request):
+    """Admin dashboard to manage doctors"""
+    doctors = DoctorProfile.objects.all().select_related('user')
+    return render(request, 'accounts/admin_dashboard.html', {'doctors': doctors})
+
+
+@login_required
+@user_passes_test(admin_check)
+def doctor_register(request):
+    """Register a new doctor"""
     if request.method == 'POST':
         username = request.POST.get('username')
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
         email = request.POST.get('email')
-        password = request.POST.get('password')
-        confirm_password = request.POST.get('confirm_password')
+        doctor_id = request.POST.get('doctor_id')
+        department = request.POST.get('department')
+        phone = request.POST.get('phone')
 
-        if password != confirm_password:
-            messages.error(request, "Passwords do not match.")
-        elif User.objects.filter(username=username).exists():
+        if User.objects.filter(username=username).exists():
             messages.error(request, "Username already taken.")
+        elif DoctorProfile.objects.filter(doctor_id=doctor_id).exists():
+            messages.error(request, "Doctor ID already exists.")
         else:
-            user = User.objects.create_user(username=username, email=email, password=password)
-            messages.success(request, "Account created successfully! Please log in.")
-            return redirect('accounts:login')
-    return render(request, 'accounts/signup.html')
+            # Create user with doctor_id as password
+            user = User.objects.create_user(
+                username=username, 
+                email=email, 
+                password=doctor_id,
+                first_name=first_name,
+                last_name=last_name
+            )
+            # Create doctor profile
+            DoctorProfile.objects.create(
+                user=user,
+                doctor_id=doctor_id,
+                department=department,
+                phone=phone
+            )
+            messages.success(request, f"Doctor {first_name} {last_name} registered successfully!")
+            return redirect('accounts:admin_dashboard')
+
+    return render(request, 'accounts/doctor_register.html')
+
+
+def signup_view(request):
+    """Signup is now restricted. Only Admin can register users."""
+    messages.warning(request, "Public signup is disabled. Please contact the Admin.")
+    return redirect('accounts:login')
 
 
 def logout_view(request):
@@ -42,4 +104,5 @@ def logout_view(request):
     if request.method == 'POST':
         logout(request)
         return redirect('accounts:login')
-    return render(request, 'accounts/logout.html')
+    # If GET, redirect to login
+    return redirect('accounts:login')

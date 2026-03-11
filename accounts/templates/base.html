@@ -11,11 +11,17 @@
   <div class="container-fluid bg bg-danger" >
     <a class="navbar-brand" href="{% url 'dashboard:dashboard_home' %}">CareMatrix</a>
 
-    <div class="d-flex gap-3">
+    <div class="d-flex gap-3 align-items-center">
       <a class="nav-link text-info" href="{% url 'dashboard:dashboard_home' %}">Home</a>
       <a class="nav-link text-info" href="{% url 'patients:patient_list' %}">Patients</a>
       <a class="nav-link text-info" href="{% url 'patients:ward_list' %}">Wards</a>
-      <a class="btn btn-outline-info btn-sm" href="{% url 'accounts:logout' %}">Log Out</a>
+      {% if user.is_superuser %}
+        <a class="nav-link text-warning fw-bold" href="{% url 'accounts:admin_dashboard' %}">Admin Panel</a>
+      {% endif %}
+      <form action="{% url 'accounts:logout' %}" method="post" class="m-0">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline-info btn-sm">Log Out</button>
+      </form>
     </div>
   </div>
 </nav>
