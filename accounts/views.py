@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect ,get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib import messages
@@ -106,3 +106,14 @@ def logout_view(request):
         return redirect('accounts:login')
     # If GET, redirect to login
     return redirect('accounts:login')
+
+
+
+def doctor_delete(request, id):
+    doctor = get_object_or_404(DoctorProfile, id=id)
+
+    if request.method == "POST":
+        doctor.user.delete()
+        # return redirect('admin_dashboard')
+
+    return redirect('accounts:admin_dashboard')

@@ -10,4 +10,6 @@ urlpatterns = [
     path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
     path('register-doctor/', views.doctor_register, name='doctor_register'),
     path('', views.login_view, name='root'),
+    path('doctor/delete/<int:id>/', views.doctor_delete, name='doctor_delete'),
+
 ]

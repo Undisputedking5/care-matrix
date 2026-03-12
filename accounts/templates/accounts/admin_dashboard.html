@@ -39,10 +39,13 @@
                                 <td>{{ doctor.department }}</td>
                                 <td>{{ doctor.phone }}</td>
                                 <td>{{ doctor.user.username }}</td>
-                                <td>
-                                    <!-- Add Edit/Delete if needed -->
-                                    <span class="text-muted">No actions</span>
-                                </td>
+                                <td><form action="{% url 'accounts:doctor_delete' doctor.id %}" method="POST" style="display:inline;">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger"
+        onclick="return confirm('Are you sure you want to delete this record?');">
+        DELETE
+    </button>
+</form></td>
                             </tr>
                             {% empty %}
                             <tr>
