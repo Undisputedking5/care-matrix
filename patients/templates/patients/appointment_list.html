@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4 mb-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="text-light mb-0">📅 Appointments</h3>
+    </div>
+
+    <!-- Upcoming Appointments -->
+    <div class="content-card p-4 mb-4 shadow-sm">
+        <h5 class="text-light border-bottom border-secondary pb-2 mb-3">Upcoming & Today</h5>
+        {% if upcoming %}
+            <div class="table-responsive">
+                <table class="table table-borderless align-middle mb-0">
+                    <thead>
+                        <tr class="text-white-50 small text-uppercase">
+                            <th>Patient</th>
+                            <th>Doctor</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Reason</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for appt in upcoming %}
+                        <tr class="border-bottom border-secondary">
+                            <td>
+                                <a href="{% url 'patients:patient_detail' appt.patient.pk %}" class="text-info text-decoration-none fw-bold">
+                                    {{ appt.patient.first_name }} {{ appt.patient.last_name }}
+                                </a>
+                            </td>
+                            <td class="text-white-50">{{ appt.doctor }}</td>
+                            <td>
+                                {% if appt.appointment_date == today %}
+                                    <span class="badge bg-success">Today</span>
+                                {% else %}
+                                    <span class="text-light">{{ appt.appointment_date }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-white-50">{{ appt.appointment_time }}</td>
+                            <td class="text-white-50">{{ appt.reason }}</td>
+                            <td>
+                                <form action="{% url 'patients:complete_appointment' appt.pk %}" method="POST" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-success" onclick="return confirm('Mark as completed?')">✓ Done</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-white-50 mb-0">No upcoming appointments.</p>
+        {% endif %}
+    </div>
+
+    <!-- Past Appointments -->
+    {% if past %}
+    <div class="content-card p-4 shadow-sm">
+        <h5 class="text-white-50 border-bottom border-secondary pb-2 mb-3">Recent Past Appointments</h5>
+        <div class="table-responsive">
+            <table class="table table-borderless align-middle mb-0">
+                <thead>
+                    <tr class="text-white-50 small text-uppercase">
+                        <th>Patient</th>
+                        <th>Doctor</th>
+                        <th>Date</th>
+                        <th>Reason</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for appt in past %}
+                    <tr class="border-bottom border-secondary opacity-75">
+                        <td class="text-light">{{ appt.patient.first_name }} {{ appt.patient.last_name }}</td>
+                        <td class="text-white-50">{{ appt.doctor }}</td>
+                        <td class="text-white-50">{{ appt.appointment_date }}</td>
+                        <td class="text-white-50">{{ appt.reason }}</td>
+                        <td>
+                            {% if appt.is_completed %}
+                                <span class="badge bg-success">Completed</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">Missed</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

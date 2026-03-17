@@ -22,12 +22,20 @@ urlpatterns = [
     path('<int:pk>/discharge/', views.discharge_patient, name='discharge_patient'),
     path('wards/<int:pk>/update/', views.ward_update, name='ward_update'),
     path('wards/<int:pk>/delete/', views.ward_delete, name='ward_delete'),
-    path('beds/create/<int:ward_id>/', views.bed_create, name='bed_create'),
-    path('beds/update/<int:ward_id>/', views.bed_update, name='bed_update'),
-    path('beds/delete/<int:ward_id>/', views.bed_delete, name='bed_delete'),
+    path('beds/create/<int:pk>/', views.bed_create, name='bed_create'),
+    path('beds/update/<int:pk>/', views.bed_update, name='bed_update'),
+    path('beds/delete/<int:pk>/', views.bed_delete, name='bed_delete'),
 
     path('<int:pk>/admit/', views.admit_patient, name='admit_patient'),
     path('<int:pk>/discharge/', views.discharge_patient, name='discharge_patient'),
+
+    # Handover Notes
+    path('<int:pk>/handover/', views.add_handover_note, name='add_handover_note'),
+
+    # Appointments
+    path('<int:pk>/appointment/', views.book_appointment, name='book_appointment'),
+    path('appointments/', views.appointment_list, name='appointment_list'),
+    path('appointments/<int:pk>/complete/', views.complete_appointment, name='complete_appointment'),
 
 ]
 

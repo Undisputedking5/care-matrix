@@ -1,9 +1,11 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from patients.models import Patient, VitalSign, MedicalRecord, LabResult
+from datetime import date
+from patients.models import Patient, VitalSign, MedicalRecord, LabResult, HandoverNote, Appointment
 
 @login_required
 def dashboard_home(request):
+    today = date.today()
     # Total patients
     patients_count = Patient.objects.count()
 
@@ -43,6 +45,16 @@ def dashboard_home(request):
     available_beds = total_beds - occupied_beds
     occupancy_rate = round((occupied_beds / total_beds * 100) if total_beds > 0 else 0)
 
+    # Today's Appointments
+    todays_appointments = Appointment.objects.filter(
+        appointment_date=today, is_completed=False
+    ).select_related('patient').order_by('appointment_time')
+
+    # Today's Handover Notes
+    todays_handovers = HandoverNote.objects.filter(
+        created_at__date=today
+    ).select_related('patient').order_by('-created_at')[:10]
+
     context = {
         'patients_count': patients_count,
         'avg_bmi': avg_bmi,
@@ -53,6 +65,9 @@ def dashboard_home(request):
         'occupied_beds': occupied_beds,
         'available_beds': available_beds,
         'occupancy_rate': occupancy_rate,
+        'todays_appointments': todays_appointments,
+        'todays_handovers': todays_handovers,
+        'today': today,
     }
 
     return render(request, 'dashboard/home.html', context)

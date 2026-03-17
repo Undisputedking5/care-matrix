@@ -96,3 +96,65 @@ class LabResult(models.Model):
     status = models.CharField(max_length=10, choices=STATUS_CHOICES)
     notes = models.TextField(blank=True)
     test_date = models.DateField(default=date.today)
+
+
+# -----------------------------
+# Handover Notes
+# -----------------------------
+class HandoverNote(models.Model):
+    patient = models.ForeignKey(Patient, related_name='handover_notes', on_delete=models.CASCADE)
+    written_by = models.CharField(max_length=150)
+    note = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Handover by {self.written_by} for {self.patient} on {self.created_at.date()}"
+
+
+# -----------------------------
+# Appointments
+# -----------------------------
+class Appointment(models.Model):
+    patient = models.ForeignKey(Patient, related_name='appointments', on_delete=models.CASCADE)
+    doctor = models.CharField(max_length=150)
+    appointment_date = models.DateField()
+    appointment_time = models.TimeField()
+    reason = models.CharField(max_length=250)
+    is_completed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['appointment_date', 'appointment_time']
+
+    def __str__(self):
+        return f"{self.patient} - {self.appointment_date} {self.appointment_time}"
+
+
+# -----------------------------
+# Audit Log
+# -----------------------------
+class AuditLog(models.Model):
+    ACTION_CHOICES = (
+        ('CREATE', 'Create'),
+        ('UPDATE', 'Update'),
+        ('DELETE', 'Delete'),
+        ('ADMIT', 'Admit'),
+        ('DISCHARGE', 'Discharge'),
+        ('LOGIN', 'Login'),
+        ('LOGOUT', 'Logout'),
+        ('NOTE', 'Handover Note'),
+        ('APPOINTMENT', 'Appointment'),
+    )
+    user = models.CharField(max_length=150)
+    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
+    description = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        return f"[{self.action}] {self.user} - {self.timestamp.strftime('%Y-%m-%d %H:%M')}"

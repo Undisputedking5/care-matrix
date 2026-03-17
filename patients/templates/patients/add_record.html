@@ -1,14 +1,18 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container mt-4">
-  <h3>Add Medical Record for {{ patient.first_name }} {{ patient.last_name }}</h3>
-  <form method="POST" class="card p-4 shadow-sm">{% csrf_token %}
+<div class="row justify-content-center mt-4">
+  <div class="col-md-8 col-lg-6">
+    <div class="content-card p-4 shadow-sm">
+      <h3 class="mb-4">Add Medical Record for {{ patient.first_name }} {{ patient.last_name }}</h3>
+      <form method="POST">{% csrf_token %}
     <div class="mb-3">
       <label>Description</label>
       <textarea name="description" class="form-control" rows="5" required></textarea>
     </div>
     <button type="submit" class="btn btn-success">Add Record</button>
     <a href="{% url 'patients:patient_detail' patient.id %}" class="btn btn-secondary">Cancel</a>
-  </form>
+      </form>
+    </div>
+  </div>
 </div>
 {% endblock %}

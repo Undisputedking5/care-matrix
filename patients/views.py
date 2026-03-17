@@ -1,8 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Q
 from datetime import date
-from patients.models import Patient, VitalSign, LabResult, MedicalRecord, Ward, Bed
+from patients.models import Patient, VitalSign, LabResult, MedicalRecord, Ward, Bed, HandoverNote, Appointment, AuditLog
+from accounts.models import DoctorProfile
+
+def is_admin(user):
+    return user.is_superuser
 
 import io
 import base64
@@ -13,13 +17,20 @@ import matplotlib.pyplot as plt
 
 @login_required
 def patient_list(request):
-    patients = Patient.objects.all()
-    return render(request, 'patients/list.html', {'patients': patients})
+    query = request.GET.get('q')
+    if query:
+        patients = Patient.objects.filter(
+            Q(first_name__icontains=query) | Q(last_name__icontains=query)
+        )
+    else:
+        patients = Patient.objects.all()
+    return render(request, 'patients/list.html', {'patients': patients, 'query': query})
 
 
 
 @login_required
 def patient_create(request):
+    doctors = DoctorProfile.objects.select_related('user').all()
     if request.method == 'POST':
         patient = Patient.objects.create(
             first_name=request.POST.get('first_name'),
@@ -30,9 +41,15 @@ def patient_create(request):
             address=request.POST.get('address'),
             doctor=request.POST.get('doctor')
         )
+        actor = request.user.get_full_name() or request.user.username
+        AuditLog.objects.create(
+            user=actor,
+            action='CREATE',
+            description=f"New patient registered: {patient.first_name} {patient.last_name}"
+        )
         return redirect('patients:patient_detail', pk=patient.id)
 
-    return render(request, 'patients/create.html')
+    return render(request, 'patients/create.html', {'doctors': doctors})
 
 
 @login_required
@@ -48,6 +65,11 @@ def patient_update(request, pk):
         patient.address = request.POST.get('address')
         patient.doctor = request.POST.get('doctor')
         patient.save()
+        AuditLog.objects.create(
+            user=request.user.get_full_name() or request.user.username,
+            action='UPDATE',
+            description=f"Patient details updated: {patient.first_name} {patient.last_name}"
+        )
         return redirect('patients:patient_detail', pk=patient.id)
 
     return render(request, 'patients/update.html', {'patient': patient})
@@ -68,17 +90,33 @@ def patient_detail(request, pk):
 
     if vitals:
         plt.figure(figsize=(8, 4))
-        plt.plot(labels, systolic, marker='o')
-        plt.plot(labels, diastolic, marker='o')
-        plt.title(f"{patient.first_name} {patient.last_name} - Blood Pressure")
-        plt.xlabel("Date")
-        plt.ylabel("Blood Pressure")
-        plt.legend(["Systolic", "Diastolic"])
-        plt.xticks(rotation=45)
+        # Define chart line colors fitting the theme
+        plt.plot(labels, systolic, marker='o', color='#0dcaf0', label='Systolic')
+        plt.plot(labels, diastolic, marker='o', color='#dc3545', label='Diastolic')
+        
+        plt.title(f"{patient.first_name} {patient.last_name} - Blood Pressure", color='white')
+        plt.xlabel("Date", color='white')
+        plt.ylabel("Blood Pressure", color='white')
+        
+        # Legend with transparent background & white text
+        legend = plt.legend()
+        plt.setp(legend.get_texts(), color='white')
+        if legend.get_frame():
+            legend.get_frame().set_facecolor('none')
+            legend.get_frame().set_edgecolor((1, 1, 1, 0.2))
+        
+        # Ticks and Axis Spines
+        plt.xticks(rotation=45, color='white')
+        plt.yticks(color='white')
+        
+        ax = plt.gca()
+        ax.set_facecolor('none')
+        for spine in ax.spines.values():
+            spine.set_color((1, 1, 1, 0.2))
 
         buffer = io.BytesIO()
         plt.tight_layout()
-        plt.savefig(buffer, format='png')
+        plt.savefig(buffer, format='png', transparent=True)
         buffer.seek(0)
         image_png = buffer.getvalue()
         buffer.close()
@@ -155,7 +193,13 @@ def patient_delete(request, pk):
     patient = get_object_or_404(Patient, pk=pk)
 
     if request.method == 'POST':
+        p_name = f"{patient.first_name} {patient.last_name}"
         patient.delete()
+        AuditLog.objects.create(
+            user=request.user.get_full_name() or request.user.username,
+            action='DELETE',
+            description=f"Patient deleted: {p_name}"
+        )
         return redirect('patients:patient_list')
 
     return render(request, 'patients/delete.html', {'patient': patient})
@@ -196,6 +240,11 @@ def admit_patient(request, pk):
             patient.save()
             bed.is_occupied = True
             bed.save()
+            AuditLog.objects.create(
+                user=request.user.get_full_name() or request.user.username,
+                action='ADMIT',
+                description=f"Patient {patient.first_name} {patient.last_name} admitted to {bed.ward.name} Bed {bed.bed_number}"
+            )
             return redirect('patients:patient_detail', pk=patient.pk)
 
     return render(request, 'patients/admit_patient.html', {
@@ -213,12 +262,18 @@ def discharge_patient(request, pk):
         
         patient.current_bed = None
         patient.save()
+        AuditLog.objects.create(
+            user=request.user.get_full_name() or request.user.username,
+            action='DISCHARGE',
+            description=f"Patient {patient.first_name} {patient.last_name} discharged from {bed.ward.name} Bed {bed.bed_number}"
+        )
         return redirect('patients:patient_detail', pk=patient.pk)
         
     return redirect('patients:patient_detail', pk=patient.pk)
 
 
 @login_required
+@user_passes_test(is_admin)
 def ward_create(request):
     if request.method == 'POST':
         ward = Ward.objects.create(
@@ -234,6 +289,7 @@ def ward_create(request):
 
 
 @login_required
+@user_passes_test(is_admin)
 def ward_update(request, pk):
     ward = get_object_or_404(Ward, pk=pk)
 
@@ -252,6 +308,7 @@ def ward_update(request, pk):
 
 
 @login_required
+@user_passes_test(is_admin)
 def ward_delete(request, pk):
     ward = get_object_or_404(Ward, pk=pk)
 
@@ -264,6 +321,7 @@ def ward_delete(request, pk):
 
 
 @login_required
+@user_passes_test(is_admin)
 def bed_create(request, ward_id):
     ward = get_object_or_404(Ward, id=ward_id)
 
@@ -279,6 +337,7 @@ def bed_create(request, ward_id):
 
 
 @login_required
+@user_passes_test(is_admin)
 def bed_update(request, pk):
     bed = get_object_or_404(Bed, pk=pk)
 
@@ -292,6 +351,7 @@ def bed_update(request, pk):
 
 
 @login_required
+@user_passes_test(is_admin)
 def bed_delete(request, pk):
     bed = get_object_or_404(Bed, pk=pk)
     ward_id = bed.ward.id
@@ -301,3 +361,72 @@ def bed_delete(request, pk):
         return redirect('patients:ward_detail', pk=ward_id)
 
     return render(request, 'patients/bed_delete.html', {'bed': bed})
+
+
+
+# -----------------------------------------------
+# Handover Notes
+# -----------------------------------------------
+@login_required
+def add_handover_note(request, pk):
+    patient = get_object_or_404(Patient, pk=pk)
+    if request.method == 'POST':
+        note_text = request.POST.get('note')
+        if note_text:
+            written_by = request.user.get_full_name() or request.user.username
+            HandoverNote.objects.create(patient=patient, written_by=written_by, note=note_text)
+            AuditLog.objects.create(
+                user=written_by,
+                action='NOTE',
+                description=f"Handover note written for patient: {patient.first_name} {patient.last_name}"
+            )
+            return redirect('patients:patient_detail', pk=patient.pk)
+    return redirect('patients:patient_detail', pk=patient.pk)
+
+
+# -----------------------------------------------
+# Appointments
+# -----------------------------------------------
+@login_required
+def book_appointment(request, pk):
+    patient = get_object_or_404(Patient, pk=pk)
+    if request.method == 'POST':
+        doctor = request.POST.get('doctor')
+        appointment_date = request.POST.get('appointment_date')
+        appointment_time = request.POST.get('appointment_time')
+        reason = request.POST.get('reason')
+        if appointment_date and appointment_time and reason:
+            appt = Appointment.objects.create(
+                patient=patient,
+                doctor=doctor or request.user.get_full_name() or request.user.username,
+                appointment_date=appointment_date,
+                appointment_time=appointment_time,
+                reason=reason
+            )
+            AuditLog.objects.create(
+                user=request.user.get_full_name() or request.user.username,
+                action='APPOINTMENT',
+                description=f"Appointment booked for {patient.first_name} {patient.last_name} on {appointment_date} at {appointment_time}"
+            )
+            return redirect('patients:patient_detail', pk=patient.pk)
+    return render(request, 'patients/book_appointment.html', {'patient': patient})
+
+
+@login_required
+def appointment_list(request):
+    today = date.today()
+    upcoming = Appointment.objects.filter(appointment_date__gte=today, is_completed=False).select_related('patient')
+    past = Appointment.objects.filter(appointment_date__lt=today).select_related('patient')[:20]
+    return render(request, 'patients/appointment_list.html', {
+        'upcoming': upcoming,
+        'past': past,
+        'today': today,
+    })
+
+
+@login_required
+def complete_appointment(request, pk):
+    appt = get_object_or_404(Appointment, pk=pk)
+    appt.is_completed = True
+    appt.save()
+    return redirect('patients:appointment_list')

@@ -1,14 +1,11 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-header bg-success text-white">
-                    <h4 class="mb-0">Add New Bed</h4>
-                </div>
-                <div class="card-body">
+<div class="row justify-content-center mt-4">
+    <div class="col-md-8 col-lg-6">
+        <div class="content-card shadow-sm p-4">
+            <h4 class="mb-4 text-light">Add New Bed</h4>
+            <div>
                     <div class="mb-3 pb-3 border-bottom">
                         <p class="text-muted mb-0"><strong>Ward:</strong> {{ ward.name }} ({{ ward.ward_type }})</p>
                     </div>
@@ -26,7 +23,6 @@
                             <a href="{% url 'patients:ward_detail' ward.pk %}" class="btn btn-secondary">Cancel</a>
                         </div>
                     </form>
-                </div>
             </div>
         </div>
     </div>

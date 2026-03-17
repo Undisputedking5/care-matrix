@@ -1,25 +1,25 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container mt-4">
-    <div class="card shadow-sm p-4">
-        <h3 class="mb-3">{{ patient.first_name }} {{ patient.last_name }}</h3>
+<div class="container mt-4 mb-5">
+    <div class="content-card shadow-sm p-4">
+        <h3 class="mb-4 text-light">{{ patient.first_name }} {{ patient.last_name }}</h3>
 
-        <p><strong>DOB:</strong> {{ patient.date_of_birth }}</p>
-        <p><strong>Gender:</strong> {{ patient.gender }}</p>
-        <p><strong>Phone:</strong> {{ patient.phone }}</p>
-        <p><strong>Address:</strong> {{ patient.address }}</p>
+        <p class="text-white-50"><strong class="text-light">DOB:</strong> {{ patient.date_of_birth }}</p>
+        <p class="text-white-50"><strong class="text-light">Gender:</strong> {{ patient.gender }}</p>
+        <p class="text-white-50"><strong class="text-light">Phone:</strong> {{ patient.phone }}</p>
+        <p class="text-white-50"><strong class="text-light">Address:</strong> {{ patient.address }}</p>
 
-        <p>
-            <strong>Status:</strong>
+        <p class="text-white-50">
+            <strong class="text-light">Status:</strong>
             {% if patient.current_bed %}
-              <span class="badge bg-primary">Admitted: {{ patient.current_bed.ward.name }} (Bed {{ patient.current_bed.bed_number }})</span>
+              <span class="badge bg-success">Admitted: {{ patient.current_bed.ward.name }} (Bed {{ patient.current_bed.bed_number }})</span>
             {% else %}
-              <span class="badge bg-secondary">Outpatient</span>
+              <span class="badge bg-secondary text-dark">Outpatient</span>
             {% endif %}
         </p>
-        <p><strong>Doctor:</strong> {{ patient.doctor }}</p>
+        <p class="text-white-50"><strong class="text-light">Doctor:</strong> {{ patient.doctor }}</p>
 
-        <div class="mt-3">
+        <div class="mt-3 d-flex flex-wrap gap-2">
             {% if not patient.current_bed %}
               <a href="{% url 'patients:admit_patient' patient.pk %}" class="btn btn-primary">Admit to Ward</a>
             {% else %}
@@ -28,13 +28,15 @@
                   <button type="submit" class="btn btn-warning" onclick="return confirm('Discharge {{ patient.first_name }}?');">Discharge</button>
               </form>
             {% endif %}
-            <a href="{% url 'patients:patient_update' patient.id %}" class="btn btn-warning">Edit</a>
+            <a href="{% url 'patients:book_appointment' patient.pk %}" class="btn btn-success">📅 Book Appointment</a>
+            <a href="{% url 'patients:patient_update' patient.id %}" class="btn btn-outline-light">Edit</a>
             <a href="{% url 'patients:patient_delete' patient.id %}" class="btn btn-danger">Delete</a>
             <a href="{% url 'patients:patient_list' %}" class="btn btn-secondary">Back to List</a>
         </div>
     </div>
-    <div class="card shadow-sm p-4 mt-4">
-        <h4 class="mb-3">Blood Pressure Trend</h4>
+    
+    <div class="content-card shadow-sm p-4 mt-4">
+        <h4 class="mb-4 text-light border-bottom border-secondary pb-2">Blood Pressure Trend</h4>
 
         {% if graph %}
             <img src="data:image/png;base64,{{ graph }}" class="img-fluid rounded">
@@ -43,56 +45,112 @@
         {% endif %}
     </div>
 
-    <div class="mt-4">
-        <h4>Vital Signs</h4>
-        <a href="{% url 'patients:add_vitals' patient.id %}" class="btn btn-success btn-sm mb-2">
-            Add Vitals
-        </a>
+    <div class="mt-4 content-card p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom border-secondary pb-2">
+            <h4 class="text-light mb-0">Vital Signs</h4>
+            <a href="{% url 'patients:add_vitals' patient.id %}" class="btn btn-success btn-sm">Add Vitals</a>
+        </div>
 
-        <ul class="list-group">
+        <ul class="list-group list-group-flush">
             {% for vital in patient.vitals.all %}
-                <li class="list-group-item">
-                    {{ vital.visit_date }} |
-                    BP: {{ vital.blood_pressure_systolic }}/{{ vital.blood_pressure_diastolic }} |
-                    Pulse: {{ vital.pulse }} |
-                    Temp: {{ vital.temperature }}°C
+                <li class="list-group-item bg-transparent text-white-50 border-secondary">
+                    <strong class="text-light">{{ vital.visit_date }}</strong> &nbsp;|&nbsp;
+                    BP: <span class="text-info">{{ vital.blood_pressure_systolic }}/{{ vital.blood_pressure_diastolic }}</span> &nbsp;|&nbsp;
+                    Pulse: <span class="text-warning">{{ vital.pulse }}</span> &nbsp;|&nbsp;
+                    Temp: <span class="text-danger">{{ vital.temperature }}°C</span>
                 </li>
             {% empty %}
-                <li class="list-group-item">No vitals recorded.</li>
+                <li class="list-group-item bg-transparent text-white-50 border-secondary">No vitals recorded.</li>
             {% endfor %}
         </ul>
     </div>
-    <div class="mt-4">
-        <h4>Lab Results</h4>
-        <a href="{% url 'patients:add_lab' patient.id %}" class="btn btn-success btn-sm mb-2">
-            Add Lab Result
-        </a>
+    
+    <div class="mt-4 content-card p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom border-secondary pb-2">
+            <h4 class="text-light mb-0">Lab Results</h4>
+            <a href="{% url 'patients:add_lab' patient.id %}" class="btn btn-success btn-sm">Add Lab Result</a>
+        </div>
 
-        <ul class="list-group">
+        <ul class="list-group list-group-flush">
             {% for lab in patient.labs.all %}
-                <li class="list-group-item">
-                    {{ lab.test_date }} |
-                    {{ lab.test_name }}: {{ lab.result_value }}
-                    <strong>({{ lab.status }})</strong>
+                <li class="list-group-item bg-transparent text-white-50 border-secondary">
+                    <strong class="text-light">{{ lab.test_date }}</strong> &nbsp;|&nbsp;
+                    <span class="text-info">{{ lab.test_name }}</span>: {{ lab.result_value }}
+                    <span class="badge {% if lab.status == 'Normal' %}bg-success{% elif lab.status == 'Pending' %}bg-warning text-dark{% else %}bg-danger{% endif %} ms-2">{{ lab.status }}</span>
                 </li>
             {% empty %}
-                <li class="list-group-item">No lab results recorded.</li>
+                <li class="list-group-item bg-transparent text-white-50 border-secondary">No lab results recorded.</li>
             {% endfor %}
         </ul>
     </div>
-    <div class="mt-4">
-        <h4>Medical Records</h4>
-        <a href="{% url 'patients:add_record' patient.id %}" class="btn btn-primary btn-sm mb-2">
-            Add Record
-        </a>
+    
+    <div class="mt-4 content-card p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom border-secondary pb-2">
+            <h4 class="text-light mb-0">Medical Records</h4>
+            <a href="{% url 'patients:add_record' patient.id %}" class="btn btn-primary btn-sm">Add Record</a>
+        </div>
 
-        <ul class="list-group">
+        <ul class="list-group list-group-flush">
             {% for record in patient.medicalrecord_set.all %}
-                <li class="list-group-item">
-                    {{ record.created_at }} | {{ record.description }}
+                <li class="list-group-item bg-transparent text-white-50 border-secondary">
+                    <strong class="text-light">{{ record.created_at|date:"M d, Y" }}</strong> &nbsp;|&nbsp; <span class="text-light">{{ record.description }}</span>
                 </li>
             {% empty %}
-                <li class="list-group-item">No medical records added.</li>
+                <li class="list-group-item bg-transparent text-white-50 border-secondary">No medical records added.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- Upcoming Appointments -->
+    {% with upcoming=patient.appointments.all %}
+    {% if upcoming %}
+    <div class="mt-4 content-card p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom border-secondary pb-2">
+            <h4 class="text-light mb-0">📅 Scheduled Appointments</h4>
+            <a href="{% url 'patients:appointment_list' %}" class="btn btn-outline-primary btn-sm">View All</a>
+        </div>
+        <ul class="list-group list-group-flush">
+            {% for appt in upcoming %}
+                <li class="list-group-item bg-transparent text-white-50 border-secondary d-flex justify-content-between align-items-center">
+                    <span>
+                        <strong class="text-light">{{ appt.appointment_date }}</strong> at <span class="text-info">{{ appt.appointment_time }}</span>
+                        &nbsp;—&nbsp; {{ appt.reason }}
+                    </span>
+                    {% if appt.is_completed %}<span class="badge bg-success ms-2">Done</span>{% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <!-- Handover Notes -->
+    <div class="mt-4 content-card p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom border-secondary pb-2">
+            <h4 class="text-light mb-0">📋 Handover Notes</h4>
+        </div>
+
+        <!-- Write New Handover Note -->
+        <form method="POST" action="{% url 'patients:add_handover_note' patient.pk %}" class="mb-4">
+            {% csrf_token %}
+            <div class="mb-2">
+                <textarea class="form-control" name="note" rows="2" placeholder="Write a handover note for the incoming doctor..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-outline-warning btn-sm">Submit Handover Note</button>
+        </form>
+
+        <!-- Previous Notes -->
+        <ul class="list-group list-group-flush">
+            {% for hn in patient.handover_notes.all %}
+                <li class="list-group-item bg-transparent text-white-50 border-secondary">
+                    <div class="d-flex justify-content-between mb-1">
+                        <strong class="text-light">{{ hn.written_by }}</strong>
+                        <small class="text-white-50">{{ hn.created_at|date:"M d, Y H:i" }}</small>
+                    </div>
+                    <span>{{ hn.note }}</span>
+                </li>
+            {% empty %}
+                <li class="list-group-item bg-transparent text-white-50 border-secondary">No handover notes yet.</li>
             {% endfor %}
         </ul>
     </div>

@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from .models import DoctorProfile
+from patients.models import AuditLog
 
 
 def admin_check(user):
@@ -34,6 +35,11 @@ def login_view(request):
                 messages.error(request, "Access denied. Only superusers can log in via Admin mode.")
             else:
                 login(request, user)
+                AuditLog.objects.create(
+                    user=user.get_full_name() or user.username,
+                    action='LOGIN',
+                    description=f"User logged in: {user.username}"
+                )
                 if user.is_superuser:
                     return redirect('accounts:admin_dashboard')
                 return redirect('dashboard:dashboard_home')
@@ -64,6 +70,19 @@ def doctor_register(request):
         last_name = request.POST.get('last_name')
         email = request.POST.get('email')
         doctor_id = request.POST.get('doctor_id')
+        
+        # If doctor_id is not provided, generate one automatically
+        if not doctor_id:
+            import random
+            import string
+            random_suffix = ''.join(random.choices(string.digits, k=4))
+            doctor_id = f"DOC-{random_suffix}"
+            
+            # Ensure it's unique
+            while DoctorProfile.objects.filter(doctor_id=doctor_id).exists():
+                random_suffix = ''.join(random.choices(string.digits, k=4))
+                doctor_id = f"DOC-{random_suffix}"
+
         department = request.POST.get('department')
         phone = request.POST.get('phone')
 
@@ -87,7 +106,12 @@ def doctor_register(request):
                 department=department,
                 phone=phone
             )
-            messages.success(request, f"Doctor {first_name} {last_name} registered successfully!")
+            AuditLog.objects.create(
+                user=request.user.get_full_name() or request.user.username,
+                action='CREATE',
+                description=f"New doctor registered: {first_name} {last_name} ({doctor_id})"
+            )
+            messages.success(request, f"Doctor {first_name} {last_name} registered successfully! Their login ID/Password is: {doctor_id}")
             return redirect('accounts:admin_dashboard')
 
     return render(request, 'accounts/doctor_register.html')
@@ -102,7 +126,13 @@ def signup_view(request):
 def logout_view(request):
     """Logs out the user"""
     if request.method == 'POST':
+        user_name = request.user.get_full_name() or request.user.username
         logout(request)
+        AuditLog.objects.create(
+            user=user_name,
+            action='LOGOUT',
+            description=f"User logged out: {user_name}"
+        )
         return redirect('accounts:login')
     # If GET, redirect to login
     return redirect('accounts:login')
@@ -113,7 +143,54 @@ def doctor_delete(request, id):
     doctor = get_object_or_404(DoctorProfile, id=id)
 
     if request.method == "POST":
+        doc_name = doctor.user.get_full_name() or doctor.user.username
         doctor.user.delete()
+        AuditLog.objects.create(
+            user=request.user.get_full_name() or request.user.username,
+            action='DELETE',
+            description=f"Doctor deleted: {doc_name}"
+        )
         # return redirect('admin_dashboard')
 
     return redirect('accounts:admin_dashboard')
+
+
+# -------------------------------------------------
+# Doctor Performance Dashboard (Admin Only)
+# -------------------------------------------------
+@login_required
+@user_passes_test(admin_check)
+def doctor_performance(request):
+    from patients.models import Patient, VitalSign, LabResult, AuditLog
+    from django.db.models import Count
+
+    doctors = DoctorProfile.objects.select_related('user').all()
+
+    performance_data = []
+    for profile in doctors:
+        doc_name = profile.user.get_full_name() or profile.user.username
+        patient_count = Patient.objects.filter(doctor__iexact=doc_name).count()
+        vitals_count = VitalSign.objects.filter(patient__doctor__iexact=doc_name).count()
+        labs_count = LabResult.objects.filter(patient__doctor__iexact=doc_name).count()
+        performance_data.append({
+            'doctor': profile,
+            'name': doc_name,
+            'patient_count': patient_count,
+            'vitals_count': vitals_count,
+            'labs_count': labs_count,
+        })
+
+    return render(request, 'accounts/doctor_performance.html', {
+        'performance_data': performance_data
+    })
+
+
+# -------------------------------------------------
+# Audit Log (Admin Only)
+# -------------------------------------------------
+@login_required
+@user_passes_test(admin_check)
+def audit_log(request):
+    from patients.models import AuditLog
+    logs = AuditLog.objects.all()[:200]
+    return render(request, 'accounts/audit_log.html', {'logs': logs})

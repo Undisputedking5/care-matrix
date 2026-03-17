@@ -2,15 +2,21 @@
 {% block content %}
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>Patients List</h2>
-        <a href="{% url 'patients:patient_create' %}" class="btn btn-success">Add Patient</a>
+        <h2 class="page-title">Patients List</h2>
+        <div class="d-flex gap-3 align-items-center">
+            <form method="GET" action="{% url 'patients:patient_list' %}" class="d-flex">
+                <input type="text" name="q" class="form-control me-2" placeholder="Search Patient By Name" value="{{ query|default:'' }}">
+                <button type="submit" class="btn btn-outline-danger">Search</button>
+            </form>
+            <a href="{% url 'patients:patient_create' %}" class="btn btn-danger">Add Patient</a>
+        </div>
     </div>
 
     {% if patients %}
     <div class="row">
         {% for patient in patients %}
         <div class="col-md-4 mb-3">
-            <div class="card shadow-sm p-3">
+            <div class="content-card p-3">
                 <h5>{{ patient.first_name }} {{ patient.last_name }}</h5>
                 <p>ID: {{ patient.id }}</p>
                 <p>DOB: {{ patient.date_of_birth }}</p>

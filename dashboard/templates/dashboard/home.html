@@ -4,46 +4,60 @@
 <div class="container mt-4">
 
   <h2 class="mb-4 text-light">CareMatrix Patients Summary</h2>
+  {% if user.is_superuser %}
   <div class="row mb-4">
 
     <div class="col-md-3 mb-3">
-      <div class="card shadow-sm text-white bg-primary p-4 text-center h-100">
-        <h6 class="text-uppercase">Total Patients</h6>
+      <div class="card shadow-sm text-white bg-primary p-4 text-center h-100 border-0" style="border-radius: 16px;">
+        <h6 class="text-uppercase" style="letter-spacing: 1px;">Total Patients</h6>
         <h2 class="fw-bold">{{ patients_count }}</h2>
       </div>
     </div>
 
     <div class="col-md-3 mb-3">
-      <div class="card shadow-sm text-white bg-success p-4 text-center h-100">
-        <h6 class="text-uppercase">Average BMI</h6>
+      <div class="card shadow-sm text-white bg-success p-4 text-center h-100 border-0" style="border-radius: 16px;">
+        <h6 class="text-uppercase" style="letter-spacing: 1px;">Average BMI</h6>
         <h2 class="fw-bold">{{ avg_bmi }}</h2>
       </div>
     </div>
 
     <div class="col-md-3 mb-3">
-      <div class="card shadow-sm text-white bg-danger p-4 text-center h-100">
-        <h6 class="text-uppercase">High-Risk Patients</h6>
+      <div class="card shadow-sm text-white bg-danger p-4 text-center h-100 border-0" style="border-radius: 16px;">
+        <h6 class="text-uppercase" style="letter-spacing: 1px;">High-Risk Patients</h6>
         <h2 class="fw-bold">{{ high_risk_patients|length }}</h2>
       </div>
     </div>
     
     <div class="col-md-3 mb-3">
-      <div class="card shadow-sm text-white bg-info p-4 text-center h-100">
-        <h6 class="text-uppercase">Bed Occupancy</h6>
+      <div class="card shadow-sm text-white bg-info p-4 text-center h-100 border-0" style="border-radius: 16px;">
+        <h6 class="text-uppercase" style="letter-spacing: 1px;">Bed Occupancy</h6>
         <h2 class="fw-bold">{{ occupancy_rate }}<small class="fs-4">%</small></h2>
         <small class="text-white-50">{{ available_beds }} of {{ total_beds }} available</small>
       </div>
     </div>
-
   </div>
+  {% else %}
+  <div class="row mb-4">
+    <div class="col-12">
+        <div class="content-card border-0 p-5 rounded-4" style="background: linear-gradient(135deg, #2b1055, #7597de); color: white;">
+            <h4>Welcome, Dr. {{ user.first_name }} {{ user.last_name }}!</h4>
+            <p class="text-white-50">Use the navigation bar above or the quick actions below to manage your patients.</p>
+            <div class="d-flex gap-3 mt-3">
+                <a href="{% url 'patients:patient_list' %}" class="btn btn-outline-light px-4 py-2">Search Patients</a>
+                <a href="{% url 'patients:patient_create' %}" class="btn btn-light px-4 py-2 text-primary fw-bold">Add New Patient</a>
+            </div>
+        </div>
+    </div>
+  </div>
+  {% endif %}
   <div class="mb-4">
-    <h4>High-Risk Patients</h4>
+    <h4 class="mb-3">High-Risk Patients</h4>
     <div class="row">
       {% for patient in high_risk_patients %}
         <div class="col-md-3 mb-3">
-          <div class="card shadow-sm border-danger text-center p-3">
-            <h6 class="fw-bold">{{ patient.first_name }} {{ patient.last_name }}</h6>
-            <small class="text-muted">Patient ID: {{ patient.id }}</small>
+          <div class="content-card text-center p-3" style="border-top: 4px solid var(--accent);">
+            <h6 class="fw-bold mb-1">{{ patient.first_name }} {{ patient.last_name }}</h6>
+            <small class="text-danger">Patient ID: {{ patient.id }}</small>
           </div>
         </div>
       {% empty %}
@@ -53,36 +67,88 @@
       {% endfor %}
     </div>
   </div>
-  <div class="mb-4">
-    <h4>Recent Vital Signs</h4>
-    {% if recent_vitals %}
-      <ul class="list-group">
-        {% for vital in recent_vitals %}
-          <li class="list-group-item">
-            <strong>{{ vital.patient.first_name }} {{ vital.patient.last_name }}</strong> —
-            {{ vital.visit_date }} | BP: {{ vital.blood_pressure_systolic }}/{{ vital.blood_pressure_diastolic }},
-            Pulse: {{ vital.pulse }}, Temp: {{ vital.temperature }}°C
-          </li>
-        {% endfor %}
-      </ul>
-    {% else %}
-      <p class="text-muted">No vital signs recorded yet.</p>
-    {% endif %}
+  <div class="row">
+      <div class="col-md-6 mb-4">
+        <h4 class="mb-3">Recent Vital Signs</h4>
+        {% if recent_vitals %}
+          <div class="list-group list-group-flush rounded-3 overflow-hidden shadow-sm" style="border: 1px solid var(--border-color);">
+            {% for vital in recent_vitals %}
+              <div class="list-group-item d-flex justify-content-between align-items-center" style="background-color: var(--card-bg); color: var(--text-color); border-bottom: 1px solid var(--border-color);">
+                <div>
+                    <strong>{{ vital.patient.first_name }} {{ vital.patient.last_name }}</strong><br>
+                    <small class="text-muted">BP: {{ vital.blood_pressure_systolic }}/{{ vital.blood_pressure_diastolic }} | Pulse: {{ vital.pulse }}</small>
+                </div>
+                <span class="badge bg-primary rounded-pill">{{ vital.visit_date }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted">No vital signs recorded yet.</p>
+        {% endif %}
+      </div>
+      <div class="col-md-6 mb-4">
+        <h4 class="mb-3">Recent Lab Results</h4>
+        {% if recent_labs %}
+          <div class="list-group list-group-flush rounded-3 overflow-hidden shadow-sm" style="border: 1px solid var(--border-color);">
+            {% for lab in recent_labs %}
+              <div class="list-group-item d-flex justify-content-between align-items-center" style="background-color: var(--card-bg); color: var(--text-color); border-bottom: 1px solid var(--border-color);">
+                <div>
+                   <strong>{{ lab.patient.first_name }} {{ lab.patient.last_name }}</strong><br>
+                   <small class="text-muted">{{ lab.test_name }}: {{ lab.result_value }}</small>
+                </div>
+                <span class="badge {% if lab.status == 'Normal' %}bg-success{% else %}bg-danger{% endif %} rounded-pill">{{ lab.status }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted">No lab results recorded yet.</p>
+        {% endif %}
+      </div>
   </div>
-  <div class="mb-4">
-    <h4>Recent Lab Results</h4>
-    {% if recent_labs %}
-      <ul class="list-group">
-        {% for lab in recent_labs %}
-          <li class="list-group-item">
-            <strong>{{ lab.patient.first_name }} {{ lab.patient.last_name }}</strong> —
-            {{ lab.test_date }} | {{ lab.test_name }}: {{ lab.result_value }} ({{ lab.status }})
-          </li>
-        {% endfor %}
-      </ul>
-    {% else %}
-      <p class="text-muted">No lab results recorded yet.</p>
-    {% endif %}
+
+  <!-- Today's Appointments -->
+  <div class="row mt-2 mb-4">
+    <div class="col-md-6 mb-4">
+      <div class="content-card p-4 shadow-sm h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom border-secondary pb-2">
+          <h5 class="text-light mb-0">📅 Today's Appointments</h5>
+          <a href="{% url 'patients:appointment_list' %}" class="btn btn-outline-primary btn-sm">View All</a>
+        </div>
+        {% if todays_appointments %}
+          {% for appt in todays_appointments %}
+            <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary">
+              <div>
+                <a href="{% url 'patients:patient_detail' appt.patient.pk %}" class="text-info text-decoration-none fw-bold small">{{ appt.patient.first_name }} {{ appt.patient.last_name }}</a><br>
+                <small class="text-white-50">{{ appt.reason }}</small>
+              </div>
+              <span class="badge bg-primary ms-2">{{ appt.appointment_time }}</span>
+            </div>
+          {% endfor %}
+        {% else %}
+          <p class="text-white-50 mb-0 small">No appointments scheduled for today.</p>
+        {% endif %}
+      </div>
+    </div>
+    <div class="col-md-6 mb-4">
+      <div class="content-card p-4 shadow-sm h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom border-secondary pb-2">
+          <h5 class="text-light mb-0">📋 Today's Handover Notes</h5>
+        </div>
+        {% if todays_handovers %}
+          {% for hn in todays_handovers %}
+            <div class="py-2 border-bottom border-secondary">
+              <div class="d-flex justify-content-between mb-1">
+                <a href="{% url 'patients:patient_detail' hn.patient.pk %}" class="text-info text-decoration-none fw-bold small">{{ hn.patient.first_name }} {{ hn.patient.last_name }}</a>
+                <small class="text-white-50">{{ hn.written_by }}</small>
+              </div>
+              <small class="text-white-50">{{ hn.note|truncatewords:15 }}</small>
+            </div>
+          {% endfor %}
+        {% else %}
+          <p class="text-white-50 mb-0 small">No handover notes written today.</p>
+        {% endif %}
+      </div>
+    </div>
   </div>
 
 </div>
